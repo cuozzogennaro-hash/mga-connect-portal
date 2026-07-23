@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedOperatoreIndexRouteImport } from './routes/_authenticated/operatore/index'
 import { Route as AuthenticatedClienteIndexRouteImport } from './routes/_authenticated/cliente/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedClienteOrdiniRouteImport } from './routes/_authenticated/cliente/ordini'
 
 const RegistrazioneRoute = RegistrazioneRouteImport.update({
   id: '/registrazione',
@@ -53,11 +54,18 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedClienteOrdiniRoute =
+  AuthenticatedClienteOrdiniRouteImport.update({
+    id: '/cliente/ordini',
+    path: '/cliente/ordini',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/registrazione': typeof RegistrazioneRoute
+  '/cliente/ordini': typeof AuthenticatedClienteOrdiniRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/cliente/': typeof AuthenticatedClienteIndexRoute
   '/operatore/': typeof AuthenticatedOperatoreIndexRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/registrazione': typeof RegistrazioneRoute
+  '/cliente/ordini': typeof AuthenticatedClienteOrdiniRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/cliente': typeof AuthenticatedClienteIndexRoute
   '/operatore': typeof AuthenticatedOperatoreIndexRoute
@@ -76,6 +85,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/registrazione': typeof RegistrazioneRoute
+  '/_authenticated/cliente/ordini': typeof AuthenticatedClienteOrdiniRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/cliente/': typeof AuthenticatedClienteIndexRoute
   '/_authenticated/operatore/': typeof AuthenticatedOperatoreIndexRoute
@@ -86,17 +96,26 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/registrazione'
+    | '/cliente/ordini'
     | '/admin/'
     | '/cliente/'
     | '/operatore/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/registrazione' | '/admin' | '/cliente' | '/operatore'
+  to:
+    | '/'
+    | '/auth'
+    | '/registrazione'
+    | '/cliente/ordini'
+    | '/admin'
+    | '/cliente'
+    | '/operatore'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/registrazione'
+    | '/_authenticated/cliente/ordini'
     | '/_authenticated/admin/'
     | '/_authenticated/cliente/'
     | '/_authenticated/operatore/'
@@ -160,16 +179,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/cliente/ordini': {
+      id: '/_authenticated/cliente/ordini'
+      path: '/cliente/ordini'
+      fullPath: '/cliente/ordini'
+      preLoaderRoute: typeof AuthenticatedClienteOrdiniRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedClienteOrdiniRoute: typeof AuthenticatedClienteOrdiniRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedClienteIndexRoute: typeof AuthenticatedClienteIndexRoute
   AuthenticatedOperatoreIndexRoute: typeof AuthenticatedOperatoreIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedClienteOrdiniRoute: AuthenticatedClienteOrdiniRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedClienteIndexRoute: AuthenticatedClienteIndexRoute,
   AuthenticatedOperatoreIndexRoute: AuthenticatedOperatoreIndexRoute,
