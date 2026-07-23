@@ -9,21 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as RegistrazioneRouteImport } from './routes/registrazione'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedClienteIndexRouteImport } from './routes/_authenticated/cliente/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedOperatoreIndexRouteImport } from './routes/_authenticated/operatore/index'
+import { Route as AuthenticatedClienteIndexRouteImport } from './routes/_authenticated/cliente/index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const RegistrazioneRoute = RegistrazioneRouteImport.update({
+  id: '/registrazione',
+  path: '/registrazione',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -31,28 +27,32 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegistrazioneRoute = RegistrazioneRouteImport.update({
-  id: '/registrazione',
-  path: '/registrazione',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedClienteIndexRoute =
-  AuthenticatedClienteIndexRouteImport.update({
-    id: '/cliente/',
-    path: '/cliente/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedOperatoreIndexRoute =
   AuthenticatedOperatoreIndexRouteImport.update({
     id: '/operatore/',
     path: '/operatore/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedClienteIndexRoute =
+  AuthenticatedClienteIndexRouteImport.update({
+    id: '/cliente/',
+    path: '/cliente/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -83,7 +83,12 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/registrazione' | '/admin/' | '/cliente/' | '/operatore/'
+    | '/'
+    | '/auth'
+    | '/registrazione'
+    | '/admin/'
+    | '/cliente/'
+    | '/operatore/'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/auth' | '/registrazione' | '/admin' | '/cliente' | '/operatore'
   id:
@@ -106,18 +111,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+    '/registrazione': {
+      id: '/registrazione'
+      path: '/registrazione'
+      fullPath: '/registrazione'
+      preLoaderRoute: typeof RegistrazioneRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -127,18 +125,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/registrazione': {
-      id: '/registrazione'
-      path: '/registrazione'
-      fullPath: '/registrazione'
-      preLoaderRoute: typeof RegistrazioneRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
-      path: '/admin'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/operatore/': {
+      id: '/_authenticated/operatore/'
+      path: '/operatore'
+      fullPath: '/operatore/'
+      preLoaderRoute: typeof AuthenticatedOperatoreIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/cliente/': {
@@ -148,11 +153,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClienteIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/operatore/': {
-      id: '/_authenticated/operatore/'
-      path: '/operatore'
-      fullPath: '/operatore/'
-      preLoaderRoute: typeof AuthenticatedOperatoreIndexRouteImport
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
