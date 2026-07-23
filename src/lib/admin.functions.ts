@@ -9,44 +9,38 @@ const ADMIN_PASSWORD = "AdminPassword123!";
 export const ensureDefaultAdmin = createServerFn({ method: "POST" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  // Check if any admin already exists
-  const { data: existingRoles } = await supabaseAdmin
-    .from("user_roles")
-    .select("id")
-    .eq("role", "admin")
-    .limit(1);
+  // Look up the seed admin user by email
+  const { data: list } = await supabaseAdmin.auth.admin.listUsers();
+  const existing = list?.users.find((u) => u.email === ADMIN_EMAIL);
 
-  if (existingRoles && existingRoles.length > 0) {
-    return { ok: true, created: false };
+  if (existing) {
+    // Ensure password/email confirmation are correct (idempotent reset to known default)
+    await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+      password: ADMIN_PASSWORD,
+      email_confirm: true,
+    });
+    await supabaseAdmin
+      .from("user_roles")
+      .upsert({ user_id: existing.id, role: "admin" }, { onConflict: "user_id,role" });
+    return { ok: true, created: false, reset: true };
   }
 
-  // Try to create the default admin user
+  // Create fresh
   const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
     email: ADMIN_EMAIL,
     password: ADMIN_PASSWORD,
     email_confirm: true,
     user_metadata: { nome: "Amministratore MGA", role: "admin" },
   });
+  if (createErr || !created?.user) return { ok: false, error: createErr?.message ?? "create failed" };
 
-  if (createErr) {
-    // If user already exists (created previously) → fetch it and ensure the role
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers();
-    const existing = list?.users.find((u) => u.email === ADMIN_EMAIL);
-    if (!existing) return { ok: false, error: createErr.message };
-    await supabaseAdmin
-      .from("user_roles")
-      .upsert({ user_id: existing.id, role: "admin" }, { onConflict: "user_id,role" });
-    return { ok: true, created: false, note: "role_ensured" };
-  }
-
-  if (created?.user) {
-    await supabaseAdmin
-      .from("user_roles")
-      .upsert({ user_id: created.user.id, role: "admin" }, { onConflict: "user_id,role" });
-  }
+  await supabaseAdmin
+    .from("user_roles")
+    .upsert({ user_id: created.user.id, role: "admin" }, { onConflict: "user_id,role" });
 
   return { ok: true, created: true };
 });
+
 
 const createUserSchema = z.object({
   email: z.string().email(),
