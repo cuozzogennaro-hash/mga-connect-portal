@@ -41,6 +41,63 @@ export const ensureDefaultAdmin = createServerFn({ method: "POST" }).handler(asy
   return { ok: true, created: true };
 });
 
+const DEMO_CLIENT_EMAIL = "cliente.demo@mgaalimentari.it";
+const DEMO_CLIENT_PASSWORD = "ClienteDemo123!";
+
+// Idempotent seed of a demo B2B client account.
+export const ensureDemoClient = createServerFn({ method: "POST" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: list } = await supabaseAdmin.auth.admin.listUsers();
+  const existing = list?.users.find((u) => u.email === DEMO_CLIENT_EMAIL);
+
+  const meta = {
+    nome: "Mario Rossi",
+    ragione_sociale: "Bar Demo S.r.l.",
+    partita_iva: "01234567890",
+    referente: "Mario Rossi",
+    telefono: "+39 333 1234567",
+    indirizzo_consegna: "Via Roma 1, 80100 Napoli (NA)",
+    role: "cliente_b2b",
+  };
+
+  let userId: string;
+  if (existing) {
+    await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+      password: DEMO_CLIENT_PASSWORD,
+      email_confirm: true,
+      user_metadata: meta,
+    });
+    userId = existing.id;
+  } else {
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: DEMO_CLIENT_EMAIL,
+      password: DEMO_CLIENT_PASSWORD,
+      email_confirm: true,
+      user_metadata: meta,
+    });
+    if (error || !created?.user) return { ok: false, error: error?.message ?? "create failed" };
+    userId = created.user.id;
+  }
+
+  await supabaseAdmin.from("profiles").upsert({
+    id: userId,
+    email: DEMO_CLIENT_EMAIL,
+    nome: meta.nome,
+    ragione_sociale: meta.ragione_sociale,
+    partita_iva: meta.partita_iva,
+    referente: meta.referente,
+    telefono: meta.telefono,
+    indirizzo_consegna: meta.indirizzo_consegna,
+  });
+  await supabaseAdmin
+    .from("user_roles")
+    .upsert({ user_id: userId, role: "cliente_b2b" }, { onConflict: "user_id,role" });
+
+  return { ok: true, email: DEMO_CLIENT_EMAIL, password: DEMO_CLIENT_PASSWORD };
+});
+
+
+
 
 const createUserSchema = z.object({
   email: z.string().email(),
