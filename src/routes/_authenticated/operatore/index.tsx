@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Volume2, VolumeX, Printer, BellRing, Camera } from "lucide-react";
+import { Volume2, VolumeX, Printer, BellRing, Camera, FileSpreadsheet } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/operatore/")({
   head: () => ({
@@ -31,6 +38,14 @@ type Ordine = {
   cliente_id: string;
   ordini_righe: { descrizione: string; quantita: string | null }[];
   profiles: { ragione_sociale: string | null; referente: string | null; telefono: string | null } | null;
+};
+
+type ListinoItem = {
+  id: string;
+  descrizione_prodotto: string;
+  prezzo: number;
+  unita_misura: string;
+  note?: string | null;
 };
 
 // Funzione sintetizzatore Web Audio API per produrre un segnale acustico chiaro su Android/Browser
@@ -69,6 +84,11 @@ function OperatoreHome() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [autoPrintEnabled, setAutoPrintEnabled] = useState(false);
   const [printingOrdine, setPrintingOrdine] = useState<Ordine | null>(null);
+
+  // Stato per la visualizzazione del listino cliente in modale
+  const [selectedListinoCliente, setSelectedListinoCliente] = useState<{ id: string; nome: string } | null>(null);
+  const [clientListinoItems, setClientListinoItems] = useState<ListinoItem[]>([]);
+  const [loadingListino, setLoadingListino] = useState(false);
 
   // Traccia gli ID degli ordini già processati/notificati in questa sessione
   const seenOrderIdsRef = useRef<Set<string>>(new Set());
@@ -114,7 +134,6 @@ function OperatoreHome() {
   // Controlla il rilevamento di nuovi ordini pronti per il laboratorio
   useEffect(() => {
     if (isFirstLoadRef.current) {
-      // Alla prima carica popola i seenOrderIds per non far suonare gli ordini vecchi
       ordiniReady.forEach((o) => seenOrderIdsRef.current.add(o.id));
       if (ordiniReady.length > 0) isFirstLoadRef.current = false;
       return;
@@ -142,6 +161,19 @@ function OperatoreHome() {
       }
     }
   }, [ordiniReady, soundEnabled, autoPrintEnabled]);
+
+  async function openListinoCliente(clienteId: string, ragioneSociale: string) {
+    setSelectedListinoCliente({ id: clienteId, nome: ragioneSociale });
+    setLoadingListino(true);
+    const { data } = await supabase
+      .from("listini_clienti")
+      .select("id, descrizione_prodotto, prezzo, unita_misura, note")
+      .eq("cliente_id", clienteId)
+      .order("descrizione_prodotto", { ascending: true });
+
+    setClientListinoItems((data ?? []) as ListinoItem[]);
+    setLoadingListino(false);
+  }
 
   async function uploadScontrino(ordineId: string, file: File) {
     setUploading(ordineId);
@@ -207,7 +239,7 @@ function OperatoreHome() {
       </div>
 
       <p className="mb-6 text-sm text-muted-foreground">
-        Gli ordini compaiono qui in tempo reale <strong>2 minuti dopo l'invio del cliente</strong>. Quando prepari i prodotti, batti lo scontrino di cassa e caricalo qui.
+        Gli ordini compaiono qui in tempo reale <strong>2 minuti dopo l'invio del cliente</strong>. Consulta il listino riservato al cliente per battitura scontrino e conto.
       </p>
 
       {/* LISTA ORDINI */}
@@ -223,10 +255,59 @@ function OperatoreHome() {
             ordine={o}
             onUpload={uploadScontrino}
             onPrint={() => handlePrint(o)}
+            onOpenListino={() => openListinoCliente(o.cliente_id, o.profiles?.ragione_sociale ?? "Cliente")}
             uploading={uploading === o.id}
           />
         ))}
       </div>
+
+      {/* DIALOG CONSULTAZIONE LISTINO PREZZI CLIENTE PER L'OPERATORE */}
+      <Dialog open={!!selectedListinoCliente} onOpenChange={(open) => !open && setSelectedListinoCliente(null)}>
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-xl flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
+              Listino Prezzi: {selectedListinoCliente?.nome}
+            </DialogTitle>
+            <DialogDescription>
+              Prezzi e condizioni concordate dall'amministrazione per il calcolo del conto e battitura scontrino.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-2">
+            {loadingListino ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Caricamento listino prezzi…</p>
+            ) : clientListinoItems.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                Nessun prezzo personalizzato presente in listino per questo cliente.
+              </div>
+            ) : (
+              <div className="rounded-lg border border-border overflow-hidden">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-muted text-xs uppercase text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-2.5">Prodotto</th>
+                      <th className="px-4 py-2.5 text-right font-bold">Prezzo Unitario</th>
+                      <th className="px-4 py-2.5">Note</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {clientListinoItems.map((item) => (
+                      <tr key={item.id} className="hover:bg-muted/30">
+                        <td className="px-4 py-3 font-medium text-foreground">{item.descrizione_prodotto}</td>
+                        <td className="px-4 py-3 text-right font-bold text-base text-emerald-700 dark:text-emerald-400">
+                          € {Number(item.prezzo).toFixed(2)} <span className="text-xs font-normal text-muted-foreground">/ {item.unita_misura}</span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground italic">{item.note ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* TEMPLATE STAMPA RICEVUTA/TAGLIANDO LABORATORIO */}
       {printingOrdine && (
@@ -281,11 +362,13 @@ function OrdineCard({
   ordine,
   onUpload,
   onPrint,
+  onOpenListino,
   uploading,
 }: {
   ordine: Ordine;
   onUpload: (id: string, f: File) => void;
   onPrint: () => void;
+  onOpenListino: () => void;
   uploading: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -323,24 +406,36 @@ function OrdineCard({
 
       {ordine.note && <p className="mt-2 text-sm italic text-muted-foreground">Nota: {ordine.note}</p>}
 
-      <div className="mt-4 flex gap-2">
+      {/* BARRA AZIONI OPERATORE */}
+      <div className="mt-4 space-y-2">
         <Button
-          size="lg"
-          className="flex-1"
-          disabled={uploading}
-          onClick={() => inputRef.current?.click()}
+          variant="secondary"
+          size="sm"
+          onClick={onOpenListino}
+          className="w-full flex items-center justify-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
         >
-          <Camera className="h-4 w-4 mr-1.5" />
-          {uploading ? "Caricamento…" : ordine.scontrino_url ? "Ricarica scontrino" : "Foto Scontrino"}
+          <FileSpreadsheet className="h-4 w-4" /> Consulta Listino Prezzi Cliente
         </Button>
 
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={onPrint}
-        >
-          <Printer className="h-4 w-4 mr-1.5" /> Stampa Tagliando
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="lg"
+            className="flex-1"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+          >
+            <Camera className="h-4 w-4 mr-1.5" />
+            {uploading ? "Caricamento…" : ordine.scontrino_url ? "Ricarica scontrino" : "Foto Scontrino"}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={onPrint}
+          >
+            <Printer className="h-4 w-4 mr-1.5" /> Stampa
+          </Button>
+        </div>
       </div>
 
       <input
@@ -358,4 +453,5 @@ function OrdineCard({
     </article>
   );
 }
+
 
