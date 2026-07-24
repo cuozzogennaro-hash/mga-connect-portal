@@ -8,7 +8,7 @@ import { adminOcrScontrino, adminGeneraDDT } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Eye, Clock, PackageCheck, CheckCircle2, FileText, XCircle } from "lucide-react";
+import { Eye, Clock, PackageCheck, CheckCircle2, FileText, XCircle, ChevronDown, ChevronUp, MapPin, Phone, User, Calendar } from "lucide-react";
 
 const adminNav = [
   { to: "/admin", label: "Dashboard" },
@@ -27,11 +27,20 @@ type Ordine = {
   id: string;
   stato: string;
   created_at: string;
+  data_ritiro: string | null;
+  note: string | null;
   scontrino_url: string | null;
   ocr_totale: number | null;
   ocr_iva: number | null;
   ocr_data: unknown;
-  profiles: { ragione_sociale: string | null; partita_iva: string | null } | null;
+  ordini_righe: { descrizione: string; quantita: string | null; note?: string | null }[];
+  profiles: {
+    ragione_sociale: string | null;
+    partita_iva: string | null;
+    referente: string | null;
+    telefono: string | null;
+    indirizzo_consegna: string | null;
+  } | null;
 };
 
 function OrdiniAdmin() {
@@ -40,6 +49,7 @@ function OrdiniAdmin() {
   const [busy, setBusy] = useState<string | null>(null);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [now, setNow] = useState<number>(Date.now());
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
   const ocr = useServerFn(adminOcrScontrino);
   const gen = useServerFn(adminGeneraDDT);
 
@@ -47,9 +57,10 @@ function OrdiniAdmin() {
     const { data } = await supabase
       .from("ordini")
       .select(
-        "id, stato, created_at, scontrino_url, ocr_totale, ocr_iva, ocr_data, profiles:cliente_id(ragione_sociale, partita_iva)",
+        "id, stato, created_at, data_ritiro, note, scontrino_url, ocr_totale, ocr_iva, ocr_data, ordini_righe(descrizione, quantita, note, posizione), profiles:cliente_id(ragione_sociale, partita_iva, referente, telefono, indirizzo_consegna)",
       )
       .order("created_at", { ascending: false });
+
     const list = (data ?? []) as unknown as Ordine[];
     setOrdini(list);
 
@@ -85,6 +96,10 @@ function OrdiniAdmin() {
     };
   }, []);
 
+  function toggleExpand(id: string) {
+    setExpandedOrders((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
   async function runOcr(id: string) {
     setBusy(id);
     try {
@@ -115,13 +130,14 @@ function OrdiniAdmin() {
   return (
     <AppShell title="Ordini & OCR (Monitoraggio)" role="Admin" nav={adminNav}>
       <p className="mb-6 text-muted-foreground">
-        Monitoraggio ordini in tempo reale: visualizza lo stato dei lavori in laboratorio e le foto degli scontrini per l'OCR ed il DDT.
+        Monitoraggio ordini in tempo reale: espandi qualsiasi ordine per consultare il dettaglio dei prodotti ed i dati di consegna.
       </p>
 
       <div className="space-y-4">
         {ordini.map((o) => {
           const createdAt = new Date(o.created_at).getTime();
           const elapsedSec = (now - createdAt) / 1000;
+          const isExpanded = !!expandedOrders[o.id];
 
           // Stato visivo per l'Admin
           const isInSospesoCliente = o.stato === "nuovo" && elapsedSec < 120;
@@ -130,13 +146,15 @@ function OrdiniAdmin() {
           const isDdtEvaso = o.stato === "evaso";
           const isAnnullato = o.stato === "annullato";
 
+          const totalItems = o.ordini_righe?.length ?? 0;
+
           return (
-            <div key={o.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
+            <div key={o.id} className="rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-primary/40">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-serif text-lg font-semibold">
-                      {o.profiles?.ragione_sociale ?? "Cliente"}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-serif text-xl font-semibold">
+                      {o.profiles?.ragione_sociale ?? "Cliente B2B"}
                     </h3>
 
                     {/* BADGES DI STATO PER L'ADMIN */}
@@ -178,7 +196,7 @@ function OrdiniAdmin() {
 
                   <p className="text-xs text-muted-foreground mt-1">
                     {o.profiles?.partita_iva && `P.IVA ${o.profiles.partita_iva} · `}
-                    Inviato il {new Date(o.created_at).toLocaleString("it-IT")}
+                    Inviato il {new Date(o.created_at).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </p>
 
                   {o.ocr_totale != null && (
@@ -191,6 +209,23 @@ function OrdiniAdmin() {
 
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleExpand(o.id)}
+                      className="flex items-center gap-1 font-semibold"
+                    >
+                      {isExpanded ? (
+                        <>
+                          <ChevronUp className="h-4 w-4" /> Chiudi Dettaglio
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4" /> Dettaglio Ordine ({totalItems} {totalItems === 1 ? "prodotto" : "prodotti"})
+                        </>
+                      )}
+                    </Button>
+
                     {signedUrls[o.id] && (
                       <Button
                         size="sm"
@@ -222,6 +257,95 @@ function OrdiniAdmin() {
                   </div>
                 </div>
               </div>
+
+              {/* SEZIONE ESPANDIBILE DETTAGLIO ORDINE */}
+              {isExpanded && (
+                <div className="mt-4 border-t border-border/60 pt-4 space-y-4 animate-in fade-in duration-200">
+                  {/* DATI DI CONTATTO E CONSEGNA CLIENTE */}
+                  <div className="grid gap-3 sm:grid-cols-3 bg-muted/40 p-3.5 rounded-lg text-xs">
+                    {o.profiles?.referente && (
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-primary" />
+                        <div>
+                          <span className="text-muted-foreground block">Referente</span>
+                          <strong className="text-foreground">{o.profiles.referente}</strong>
+                        </div>
+                      </div>
+                    )}
+                    {o.profiles?.telefono && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-primary" />
+                        <div>
+                          <span className="text-muted-foreground block">Telefono</span>
+                          <strong className="text-foreground">{o.profiles.telefono}</strong>
+                        </div>
+                      </div>
+                    )}
+                    {o.data_ritiro && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <div>
+                          <span className="text-muted-foreground block">Data Consegna Preferita</span>
+                          <strong className="text-foreground">{new Date(o.data_ritiro).toLocaleDateString("it-IT")}</strong>
+                        </div>
+                      </div>
+                    )}
+                    {o.profiles?.indirizzo_consegna && (
+                      <div className="flex items-center gap-2 sm:col-span-3">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <div>
+                          <span className="text-muted-foreground block">Indirizzo Consegna</span>
+                          <strong className="text-foreground">{o.profiles.indirizzo_consegna}</strong>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* TABELLA PRODOTTI ORDINATI */}
+                  <div>
+                    <h4 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-2">
+                      Prodotti Richiesti dal Cliente
+                    </h4>
+                    <div className="rounded-lg border border-border/80 overflow-hidden">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-muted text-xs uppercase text-muted-foreground">
+                          <tr>
+                            <th className="px-4 py-2 font-medium">#</th>
+                            <th className="px-4 py-2 font-medium">Descrizione Prodotto</th>
+                            <th className="px-4 py-2 font-medium text-right">Quantità</th>
+                            <th className="px-4 py-2 font-medium">Note per Riga</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/50">
+                          {o.ordini_righe && o.ordini_righe.length > 0 ? (
+                            o.ordini_righe.map((r, i) => (
+                              <tr key={i} className="hover:bg-muted/30">
+                                <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{i + 1}</td>
+                                <td className="px-4 py-2.5 font-medium text-foreground">{r.descrizione}</td>
+                                <td className="px-4 py-2.5 font-bold text-right text-primary">{r.quantita ?? "1"}</td>
+                                <td className="px-4 py-2.5 text-xs text-muted-foreground italic">{r.note ?? "—"}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={4} className="px-4 py-3 text-center text-xs text-muted-foreground">
+                                Nessun dettaglio riga presente per questo ordine.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* NOTE GENERALI ORDINE */}
+                  {o.note && (
+                    <div className="rounded-lg bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-300">
+                      <strong>📝 Note generali dell'ordine:</strong> {o.note}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -232,5 +356,6 @@ function OrdiniAdmin() {
     </AppShell>
   );
 }
+
 
 
