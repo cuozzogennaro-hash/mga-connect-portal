@@ -9,22 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RegistrazioneRouteImport } from './routes/registrazione'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedOperatoreIndexRouteImport } from './routes/_authenticated/operatore/index'
-import { Route as AuthenticatedClienteIndexRouteImport } from './routes/_authenticated/cliente/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as RegistrazioneRouteImport } from './routes/registrazione'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedClienteOrdiniRouteImport } from './routes/_authenticated/cliente/ordini'
-import { Route as AuthenticatedAdminUtentiRouteImport } from './routes/_authenticated/admin/utenti'
-import { Route as AuthenticatedAdminPromozioniRouteImport } from './routes/_authenticated/admin/promozioni'
-import { Route as AuthenticatedAdminOrdiniRouteImport } from './routes/_authenticated/admin/ordini'
 import { Route as AuthenticatedAdminContabilitaRouteImport } from './routes/_authenticated/admin/contabilita'
+import { Route as AuthenticatedAdminOrdiniRouteImport } from './routes/_authenticated/admin/ordini'
+import { Route as AuthenticatedAdminPromozioniRouteImport } from './routes/_authenticated/admin/promozioni'
+import { Route as AuthenticatedAdminUtentiRouteImport } from './routes/_authenticated/admin/utenti'
+import { Route as AuthenticatedClienteIndexRouteImport } from './routes/_authenticated/cliente/index'
+import { Route as AuthenticatedClienteOrdiniRouteImport } from './routes/_authenticated/cliente/ordini'
+import { Route as AuthenticatedOperatoreIndexRouteImport } from './routes/_authenticated/operatore/index'
 
-const RegistrazioneRoute = RegistrazioneRouteImport.update({
-  id: '/registrazione',
-  path: '/registrazione',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -32,48 +36,20 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const RegistrazioneRoute = RegistrazioneRouteImport.update({
+  id: '/registrazione',
+  path: '/registrazione',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedOperatoreIndexRoute =
-  AuthenticatedOperatoreIndexRouteImport.update({
-    id: '/operatore/',
-    path: '/operatore/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedClienteIndexRoute =
-  AuthenticatedClienteIndexRouteImport.update({
-    id: '/cliente/',
-    path: '/cliente/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedClienteOrdiniRoute =
-  AuthenticatedClienteOrdiniRouteImport.update({
-    id: '/cliente/ordini',
-    path: '/cliente/ordini',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminUtentiRoute =
-  AuthenticatedAdminUtentiRouteImport.update({
-    id: '/admin/utenti',
-    path: '/admin/utenti',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminPromozioniRoute =
-  AuthenticatedAdminPromozioniRouteImport.update({
-    id: '/admin/promozioni',
-    path: '/admin/promozioni',
+const AuthenticatedAdminContabilitaRoute =
+  AuthenticatedAdminContabilitaRouteImport.update({
+    id: '/admin/contabilita',
+    path: '/admin/contabilita',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminOrdiniRoute =
@@ -82,10 +58,34 @@ const AuthenticatedAdminOrdiniRoute =
     path: '/admin/ordini',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminContabilitaRoute =
-  AuthenticatedAdminContabilitaRouteImport.update({
-    id: '/admin/contabilita',
-    path: '/admin/contabilita',
+const AuthenticatedAdminPromozioniRoute =
+  AuthenticatedAdminPromozioniRouteImport.update({
+    id: '/admin/promozioni',
+    path: '/admin/promozioni',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminUtentiRoute =
+  AuthenticatedAdminUtentiRouteImport.update({
+    id: '/admin/utenti',
+    path: '/admin/utenti',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedClienteIndexRoute =
+  AuthenticatedClienteIndexRouteImport.update({
+    id: '/cliente/',
+    path: '/cliente/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedClienteOrdiniRoute =
+  AuthenticatedClienteOrdiniRouteImport.update({
+    id: '/cliente/ordini',
+    path: '/cliente/ordini',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOperatoreIndexRoute =
+  AuthenticatedOperatoreIndexRouteImport.update({
+    id: '/operatore/',
+    path: '/operatore/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -182,18 +182,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/registrazione': {
-      id: '/registrazione'
-      path: '/registrazione'
-      fullPath: '/registrazione'
-      preLoaderRoute: typeof RegistrazioneRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -203,26 +196,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/operatore/': {
-      id: '/_authenticated/operatore/'
-      path: '/operatore'
-      fullPath: '/operatore/'
-      preLoaderRoute: typeof AuthenticatedOperatoreIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/cliente/': {
-      id: '/_authenticated/cliente/'
-      path: '/cliente'
-      fullPath: '/cliente/'
-      preLoaderRoute: typeof AuthenticatedClienteIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/registrazione': {
+      id: '/registrazione'
+      path: '/registrazione'
+      fullPath: '/registrazione'
+      preLoaderRoute: typeof RegistrazioneRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
@@ -231,25 +217,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/cliente/ordini': {
-      id: '/_authenticated/cliente/ordini'
-      path: '/cliente/ordini'
-      fullPath: '/cliente/ordini'
-      preLoaderRoute: typeof AuthenticatedClienteOrdiniRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/utenti': {
-      id: '/_authenticated/admin/utenti'
-      path: '/admin/utenti'
-      fullPath: '/admin/utenti'
-      preLoaderRoute: typeof AuthenticatedAdminUtentiRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/promozioni': {
-      id: '/_authenticated/admin/promozioni'
-      path: '/admin/promozioni'
-      fullPath: '/admin/promozioni'
-      preLoaderRoute: typeof AuthenticatedAdminPromozioniRouteImport
+    '/_authenticated/admin/contabilita': {
+      id: '/_authenticated/admin/contabilita'
+      path: '/admin/contabilita'
+      fullPath: '/admin/contabilita'
+      preLoaderRoute: typeof AuthenticatedAdminContabilitaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/ordini': {
@@ -259,11 +231,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOrdiniRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/contabilita': {
-      id: '/_authenticated/admin/contabilita'
-      path: '/admin/contabilita'
-      fullPath: '/admin/contabilita'
-      preLoaderRoute: typeof AuthenticatedAdminContabilitaRouteImport
+    '/_authenticated/admin/promozioni': {
+      id: '/_authenticated/admin/promozioni'
+      path: '/admin/promozioni'
+      fullPath: '/admin/promozioni'
+      preLoaderRoute: typeof AuthenticatedAdminPromozioniRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/utenti': {
+      id: '/_authenticated/admin/utenti'
+      path: '/admin/utenti'
+      fullPath: '/admin/utenti'
+      preLoaderRoute: typeof AuthenticatedAdminUtentiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cliente/': {
+      id: '/_authenticated/cliente/'
+      path: '/cliente'
+      fullPath: '/cliente/'
+      preLoaderRoute: typeof AuthenticatedClienteIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cliente/ordini': {
+      id: '/_authenticated/cliente/ordini'
+      path: '/cliente/ordini'
+      fullPath: '/cliente/ordini'
+      preLoaderRoute: typeof AuthenticatedClienteOrdiniRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/operatore/': {
+      id: '/_authenticated/operatore/'
+      path: '/operatore'
+      fullPath: '/operatore/'
+      preLoaderRoute: typeof AuthenticatedOperatoreIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -303,3 +303,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
