@@ -71,6 +71,7 @@ function ClienteHome() {
       nav={[
         { to: "/cliente", label: "Promozioni" },
         { to: "/cliente/ordini", label: "I miei ordini" },
+        { to: "/cliente/contabilita", label: "Contabilità" },
       ]}
     >
       <div className="mb-6 flex items-center justify-between">

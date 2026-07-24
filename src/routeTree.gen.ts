@@ -20,72 +20,12 @@ import { Route as AuthenticatedClienteOrdiniRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminUtentiRouteImport } from './routes/_authenticated/admin/utenti'
 import { Route as AuthenticatedAdminPromozioniRouteImport } from './routes/_authenticated/admin/promozioni'
 import { Route as AuthenticatedAdminOrdiniRouteImport } from './routes/_authenticated/admin/ordini'
-import { Route as AuthenticatedAdminContabilitaRouteImport } from './routes/_authenticated/admin/contabilita'
+import { Route as AuthenticatedClienteContabilitaRouteImport } from './routes/_authenticated/cliente/contabilita'
 
-const RegistrazioneRoute = RegistrazioneRouteImport.update({
-  id: '/registrazione',
-  path: '/registrazione',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedOperatoreIndexRoute =
-  AuthenticatedOperatoreIndexRouteImport.update({
-    id: '/operatore/',
-    path: '/operatore/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedClienteIndexRoute =
-  AuthenticatedClienteIndexRouteImport.update({
-    id: '/cliente/',
-    path: '/cliente/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedClienteOrdiniRoute =
-  AuthenticatedClienteOrdiniRouteImport.update({
-    id: '/cliente/ordini',
-    path: '/cliente/ordini',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminUtentiRoute =
-  AuthenticatedAdminUtentiRouteImport.update({
-    id: '/admin/utenti',
-    path: '/admin/utenti',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminPromozioniRoute =
-  AuthenticatedAdminPromozioniRouteImport.update({
-    id: '/admin/promozioni',
-    path: '/admin/promozioni',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminOrdiniRoute =
-  AuthenticatedAdminOrdiniRouteImport.update({
-    id: '/admin/ordini',
-    path: '/admin/ordini',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminContabilitaRoute =
-  AuthenticatedAdminContabilitaRouteImport.update({
-    id: '/admin/contabilita',
-    path: '/admin/contabilita',
+const AuthenticatedClienteContabilitaRoute =
+  AuthenticatedClienteContabilitaRouteImport.update({
+    id: '/cliente/contabilita',
+    path: '/cliente/contabilita',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -97,6 +37,7 @@ export interface FileRoutesByFullPath {
   '/admin/ordini': typeof AuthenticatedAdminOrdiniRoute
   '/admin/promozioni': typeof AuthenticatedAdminPromozioniRoute
   '/admin/utenti': typeof AuthenticatedAdminUtentiRoute
+  '/cliente/contabilita': typeof AuthenticatedClienteContabilitaRoute
   '/cliente/ordini': typeof AuthenticatedClienteOrdiniRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/cliente/': typeof AuthenticatedClienteIndexRoute
@@ -110,6 +51,7 @@ export interface FileRoutesByTo {
   '/admin/ordini': typeof AuthenticatedAdminOrdiniRoute
   '/admin/promozioni': typeof AuthenticatedAdminPromozioniRoute
   '/admin/utenti': typeof AuthenticatedAdminUtentiRoute
+  '/cliente/contabilita': typeof AuthenticatedClienteContabilitaRoute
   '/cliente/ordini': typeof AuthenticatedClienteOrdiniRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/cliente': typeof AuthenticatedClienteIndexRoute
@@ -125,6 +67,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/ordini': typeof AuthenticatedAdminOrdiniRoute
   '/_authenticated/admin/promozioni': typeof AuthenticatedAdminPromozioniRoute
   '/_authenticated/admin/utenti': typeof AuthenticatedAdminUtentiRoute
+  '/_authenticated/cliente/contabilita': typeof AuthenticatedClienteContabilitaRoute
   '/_authenticated/cliente/ordini': typeof AuthenticatedClienteOrdiniRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/cliente/': typeof AuthenticatedClienteIndexRoute
@@ -140,6 +83,7 @@ export interface FileRouteTypes {
     | '/admin/ordini'
     | '/admin/promozioni'
     | '/admin/utenti'
+    | '/cliente/contabilita'
     | '/cliente/ordini'
     | '/admin/'
     | '/cliente/'
@@ -153,6 +97,7 @@ export interface FileRouteTypes {
     | '/admin/ordini'
     | '/admin/promozioni'
     | '/admin/utenti'
+    | '/cliente/contabilita'
     | '/cliente/ordini'
     | '/admin'
     | '/cliente'
@@ -167,6 +112,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/ordini'
     | '/_authenticated/admin/promozioni'
     | '/_authenticated/admin/utenti'
+    | '/_authenticated/cliente/contabilita'
     | '/_authenticated/cliente/ordini'
     | '/_authenticated/admin/'
     | '/_authenticated/cliente/'
@@ -231,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/cliente/contabilita': {
+      id: '/_authenticated/cliente/contabilita'
+      path: '/cliente/contabilita'
+      fullPath: '/cliente/contabilita'
+      preLoaderRoute: typeof AuthenticatedClienteContabilitaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/cliente/ordini': {
       id: '/_authenticated/cliente/ordini'
       path: '/cliente/ordini'
@@ -274,6 +227,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminOrdiniRoute: typeof AuthenticatedAdminOrdiniRoute
   AuthenticatedAdminPromozioniRoute: typeof AuthenticatedAdminPromozioniRoute
   AuthenticatedAdminUtentiRoute: typeof AuthenticatedAdminUtentiRoute
+  AuthenticatedClienteContabilitaRoute: typeof AuthenticatedClienteContabilitaRoute
   AuthenticatedClienteOrdiniRoute: typeof AuthenticatedClienteOrdiniRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedClienteIndexRoute: typeof AuthenticatedClienteIndexRoute
@@ -285,6 +239,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminOrdiniRoute: AuthenticatedAdminOrdiniRoute,
   AuthenticatedAdminPromozioniRoute: AuthenticatedAdminPromozioniRoute,
   AuthenticatedAdminUtentiRoute: AuthenticatedAdminUtentiRoute,
+  AuthenticatedClienteContabilitaRoute: AuthenticatedClienteContabilitaRoute,
   AuthenticatedClienteOrdiniRoute: AuthenticatedClienteOrdiniRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedClienteIndexRoute: AuthenticatedClienteIndexRoute,

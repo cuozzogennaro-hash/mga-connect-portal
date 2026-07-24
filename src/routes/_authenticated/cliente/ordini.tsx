@@ -222,6 +222,7 @@ function OrdiniCliente() {
       nav={[
         { to: "/cliente", label: "Promozioni" },
         { to: "/cliente/ordini", label: "I miei ordini" },
+        { to: "/cliente/contabilita", label: "Contabilità" },
       ]}
     >
       <div className="grid gap-8 lg:grid-cols-5">
