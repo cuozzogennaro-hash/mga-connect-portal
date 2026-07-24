@@ -8,7 +8,7 @@ import { adminOcrScontrino, adminGeneraDDT } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Eye, FileText, Image as ImageIcon } from "lucide-react";
+import { Eye, Clock, PackageCheck, CheckCircle2, FileText, XCircle } from "lucide-react";
 
 const adminNav = [
   { to: "/admin", label: "Dashboard" },
@@ -39,6 +39,7 @@ function OrdiniAdmin() {
   const [ordini, setOrdini] = useState<Ordine[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [now, setNow] = useState<number>(Date.now());
   const ocr = useServerFn(adminOcrScontrino);
   const gen = useServerFn(adminGeneraDDT);
 
@@ -67,6 +68,21 @@ function OrdiniAdmin() {
 
   useEffect(() => {
     refresh();
+
+    // Aggiorna la variabile temporale ogni secondo per sincronizzare i badge di stato
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    const channel = supabase
+      .channel("ordini-admin-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "ordini" }, () => refresh())
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   async function runOcr(id: string) {
@@ -97,13 +113,23 @@ function OrdiniAdmin() {
 
   if (!role) return null;
   return (
-    <AppShell title="Ordini & OCR" role="Admin" nav={adminNav}>
+    <AppShell title="Ordini & OCR (Monitoraggio)" role="Admin" nav={adminNav}>
       <p className="mb-6 text-muted-foreground">
-        Visualizza le foto degli scontrini caricate dagli operatori (riservate esclusivamente all'amministrazione), esegui l'OCR ed emetti il DDT.
+        Monitoraggio ordini in tempo reale: visualizza lo stato dei lavori in laboratorio e le foto degli scontrini per l'OCR ed il DDT.
       </p>
+
       <div className="space-y-4">
         {ordini.map((o) => {
-          const isCompleto = o.stato === "scontrinato" || o.stato === "completo";
+          const createdAt = new Date(o.created_at).getTime();
+          const elapsedSec = (now - createdAt) / 1000;
+
+          // Stato visivo per l'Admin
+          const isInSospesoCliente = o.stato === "nuovo" && elapsedSec < 120;
+          const isInPreparazioneLab = o.stato === "nuovo" && elapsedSec >= 120;
+          const isProntoScontrinato = o.stato === "scontrinato" || o.stato === "completo";
+          const isDdtEvaso = o.stato === "evaso";
+          const isAnnullato = o.stato === "annullato";
+
           return (
             <div key={o.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <div className="flex items-start justify-between gap-4">
@@ -112,14 +138,49 @@ function OrdiniAdmin() {
                     <h3 className="font-serif text-lg font-semibold">
                       {o.profiles?.ragione_sociale ?? "Cliente"}
                     </h3>
-                    <Badge variant={isCompleto ? "outline" : "default"} className={isCompleto ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-400" : "bg-blue-600 text-white"}>
-                      {isCompleto ? "Completo" : "Presa in carico"}
-                    </Badge>
+
+                    {/* BADGES DI STATO PER L'ADMIN */}
+                    {isInSospesoCliente && (
+                      <Badge variant="secondary" className="flex items-center gap-1.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-300">
+                        <Clock className="h-3.5 w-3.5 animate-pulse text-amber-600" />
+                        In sospeso (Cliente)
+                      </Badge>
+                    )}
+
+                    {isInPreparazioneLab && (
+                      <Badge variant="default" className="flex items-center gap-1.5 bg-blue-600 text-white">
+                        <PackageCheck className="h-3.5 w-3.5" />
+                        In preparazione (Laboratorio)
+                      </Badge>
+                    )}
+
+                    {isProntoScontrinato && (
+                      <Badge variant="outline" className="flex items-center gap-1.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-400">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        Pronto / Scontrinato
+                      </Badge>
+                    )}
+
+                    {isDdtEvaso && (
+                      <Badge variant="outline" className="flex items-center gap-1.5 bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-400">
+                        <FileText className="h-3.5 w-3.5 text-purple-600" />
+                        DDT Generato (Evaso)
+                      </Badge>
+                    )}
+
+                    {isAnnullato && (
+                      <Badge variant="outline" className="flex items-center gap-1.5 text-muted-foreground">
+                        <XCircle className="h-3.5 w-3.5" />
+                        Annullato
+                      </Badge>
+                    )}
                   </div>
+
                   <p className="text-xs text-muted-foreground mt-1">
                     {o.profiles?.partita_iva && `P.IVA ${o.profiles.partita_iva} · `}
                     Inviato il {new Date(o.created_at).toLocaleString("it-IT")}
                   </p>
+
                   {o.ocr_totale != null && (
                     <p className="mt-2 text-sm bg-muted/50 p-2 rounded-md inline-block">
                       Totale Scontrino OCR: <strong className="text-foreground">€ {Number(o.ocr_totale).toFixed(2)}</strong>
@@ -141,6 +202,7 @@ function OrdiniAdmin() {
                         </a>
                       </Button>
                     )}
+
                     <Button
                       size="sm"
                       variant="outline"
@@ -149,12 +211,13 @@ function OrdiniAdmin() {
                     >
                       {busy === o.id ? "Analisi…" : "Analizza Scontrino (OCR)"}
                     </Button>
+
                     <Button
                       size="sm"
-                      disabled={!o.ocr_data || busy === o.id}
+                      disabled={!o.ocr_data || busy === o.id || isDdtEvaso}
                       onClick={() => runDdt(o.id)}
                     >
-                      Genera DDT
+                      {isDdtEvaso ? "DDT Emesso" : "Genera DDT"}
                     </Button>
                   </div>
                 </div>
@@ -169,4 +232,5 @@ function OrdiniAdmin() {
     </AppShell>
   );
 }
+
 
